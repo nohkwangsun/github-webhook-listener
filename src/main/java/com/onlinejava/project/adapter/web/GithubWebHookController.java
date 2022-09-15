@@ -30,11 +30,15 @@ public class GithubWebHookController {
 
     @PostMapping()
     public ResponseEntity<String> handlePushHook(@RequestBody GithubWebHook webHook) {
+        log.info("Call the method");
         boolean isPusherValid = webHook.getPusher().getEmail().equals(pusherEmail);
         boolean isCorrectRepository = webHook.getRepository().getCloneUrl().equals(repositoryCloneUrl);
         if (!isPusherValid || !isCorrectRepository) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid Hook : " + webHook);
         }
+
+        log.info("The Github WebHook is valid. [{}]", webHook);
+
 
         try {
             process();
@@ -55,11 +59,14 @@ public class GithubWebHookController {
     }
 
     private void execute(ProcessBuilder processBuilder, String script) throws IOException, InterruptedException {
+        log.info("Start to execute [{}] at [{}]", script, processBuilder.directory().getName());
         processBuilder.command(script);
         int exitCode = processBuilder.start().waitFor();
         if (exitCode != 0) {
             log.error("Error occurs while [" + script + "]. exitCode:[" + exitCode + "]");
         }
+        log.info("Complete [{}] at [{}]", script, processBuilder.directory().getName());
+
     }
 
 }
