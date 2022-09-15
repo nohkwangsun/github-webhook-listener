@@ -30,7 +30,7 @@ public class GithubWebHookController {
 
     @PostMapping()
     public ResponseEntity<String> handlePushHook(@RequestBody GithubWebHook webHook) {
-        log.info("Call the method");
+        log.info("Call the method, handlePushHook");
         boolean isPusherValid = webHook.getPusher().getEmail().equals(pusherEmail);
         boolean isCorrectRepository = webHook.getRepository().getCloneUrl().equals(repositoryCloneUrl);
         if (!isPusherValid || !isCorrectRepository) {
@@ -46,6 +46,8 @@ public class GithubWebHookController {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("failure");
         }
+
+        log.info("Finish the method, handlePushHook");
         return ResponseEntity.status(HttpStatus.OK).body("success");
     }
 
@@ -59,7 +61,7 @@ public class GithubWebHookController {
     }
 
     private void execute(ProcessBuilder processBuilder, String script) throws IOException, InterruptedException {
-        log.info("Start to execute [{}] at [{}]", script, processBuilder.directory().getName());
+        log.info("Start to execute [{}] at [{}]", script, processBuilder.directory().getAbsolutePath());
         processBuilder.command(script);
         int exitCode = processBuilder.start().waitFor();
         if (exitCode != 0) {
