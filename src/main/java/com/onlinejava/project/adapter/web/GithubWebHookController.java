@@ -56,7 +56,6 @@ public class GithubWebHookController {
         processBuilder.directory(new File(processWorkingDirectory));
         execute(processBuilder, "bin/stop.sh");
         execute(processBuilder, "bin/build.sh");
-        Thread.sleep(3000);
         execute(processBuilder, "bin/start.sh");
     }
 
@@ -65,7 +64,9 @@ public class GithubWebHookController {
         processBuilder.command(script);
         int exitCode = processBuilder.start().waitFor();
         if (exitCode != 0) {
-            log.error("Error occurs while [" + script + "]. exitCode:[" + exitCode + "]");
+            String errorMessage = "Error occurs while [" + script + "]. exitCode:[" + exitCode + "]";
+            log.error(errorMessage);
+            throw new RuntimeException(errorMessage);
         }
         log.info("Complete [{}] at [{}]", script, processBuilder.directory().getName());
 
