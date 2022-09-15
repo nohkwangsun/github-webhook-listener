@@ -2,25 +2,16 @@ package com.onlinejava.project.adapter.web;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
+@ToString
 public class GithubWebHook {
-    @JsonProperty("hook_id")
-    private long hookId;
-    private Hook hook;
     private Repository repository;
-    private User sender;
+    private User pusher;
 
     @Getter
-    public class Hook {
-        private long id;
-        private String type;
-        private String name;
-        private boolean active;
-        private String[] events;
-    }
-
-    @Getter
+    @ToString
     public class Repository {
         private long id;
         private String name;
@@ -36,9 +27,10 @@ public class GithubWebHook {
     }
 
     @Getter
+    @ToString
     public class User {
         private long id;
-        private String login;
-        private String type;
+        private String name;
+        private String email;
     }
 }

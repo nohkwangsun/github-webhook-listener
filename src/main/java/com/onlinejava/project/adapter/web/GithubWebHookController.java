@@ -11,16 +11,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 
 @Slf4j
 @RestController("/")
 public class GithubWebHookController {
 
+    @Value("${repository.pusher.email}")
+    private String pusherEmail;
     @Value("${repository.workingDirectory}")
-    private static String processWorkingDirectory;
+    private String processWorkingDirectory;
     @Value("${repository.cloneUrl}")
-    private static String repositoryCloneUrl;
+    private String repositoryCloneUrl;
 
     @GetMapping
     public String health() {
@@ -29,9 +30,9 @@ public class GithubWebHookController {
 
     @PostMapping()
     public ResponseEntity<String> handlePushHook(@RequestBody GithubWebHook webHook) {
-        boolean isPush = Arrays.asList(webHook.getHook().getEvents()).contains("push");
+        boolean isPusherValid = webHook.getPusher().getEmail().equals(pusherEmail);
         boolean isCorrectRepository = webHook.getRepository().getCloneUrl().equals(repositoryCloneUrl);
-        if (!isPush || !isCorrectRepository) {
+        if (!isPusherValid || !isCorrectRepository) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid Hook : " + webHook);
         }
 
