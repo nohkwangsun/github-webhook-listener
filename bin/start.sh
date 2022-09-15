@@ -2,4 +2,4 @@
 
 git pull
 
-./mvnw spring-boot:run
+nohup ./mvnw spring-boot:run &>> github-webhook-listener.out &
