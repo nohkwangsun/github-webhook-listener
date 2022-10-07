@@ -1,6 +1,7 @@
 package com.onlinejava.project.adapter.web;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -8,9 +9,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.io.File;
-import java.io.IOException;
 
 @Slf4j
 @RestController("/")
@@ -20,10 +18,11 @@ public class GithubWebHookController {
     private String pusherEmail;
     @Value("${repository.sender.login}")
     private String senderLogin;
-    @Value("${repository.workingDirectory}")
-    private String processWorkingDirectory;
     @Value("${repository.cloneUrl}")
     private String repositoryCloneUrl;
+
+    @Autowired
+    private GithubWebHookService service;
 
     @GetMapping
     public String health() {
@@ -49,7 +48,7 @@ public class GithubWebHookController {
                     if (!"success".equals(webHook.getWorkflowRun().getConclusion())) {
                         log.error("The result of Github DockerAction is not success was started : " + webHook.getWorkflowRun().getConclusion());
                     }
-                    dockerRestart();
+                    service.dockerRestart();
                 }
                 default -> log.error("Invalid Action : " + webHook.getAction());
             }
@@ -63,13 +62,7 @@ public class GithubWebHookController {
         return ResponseEntity.status(HttpStatus.OK).body("success");
     }
 
-    private void dockerRestart() throws IOException, InterruptedException {
-        ProcessBuilder processBuilder = new ProcessBuilder();
-        processBuilder.directory(new File(processWorkingDirectory));
-        execute(processBuilder, "bin/docker-restart.sh");
-    }
-
-//    @PostMapping("/push")
+    @PostMapping("/push")
     public ResponseEntity<String> handlePushHook(@RequestBody GithubWebHook webHook) {
         log.info("Call the method, handlePushHook");
         boolean isPusherValid = webHook.getPusher().getEmail().equals(pusherEmail);
@@ -81,7 +74,7 @@ public class GithubWebHookController {
 
 
         try {
-            runScripts();
+            service.runScripts();
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("failure");
@@ -90,28 +83,6 @@ public class GithubWebHookController {
         log.info("Finish the method, handlePushHook");
         return ResponseEntity.status(HttpStatus.OK).body("success");
     }
-
-    public void runScripts() throws IOException, InterruptedException {
-        ProcessBuilder processBuilder = new ProcessBuilder();
-        processBuilder.directory(new File(processWorkingDirectory));
-        execute(processBuilder, "bin/stop.sh");
-        execute(processBuilder, "bin/build.sh");
-        execute(processBuilder, "bin/start.sh");
-    }
-
-    private void execute(ProcessBuilder processBuilder, String script) throws IOException, InterruptedException {
-        log.info("Start to execute [{}] at [{}]", script, processBuilder.directory().getAbsolutePath());
-        processBuilder.command(script);
-        int exitCode = processBuilder.start().waitFor();
-        if (exitCode != 0) {
-            String errorMessage = "Error occurs while [" + script + "]. exitCode:[" + exitCode + "]";
-            log.error(errorMessage);
-            throw new RuntimeException(errorMessage);
-        }
-        log.info("Complete [{}] at [{}]", script, processBuilder.directory().getName());
-
-    }
-
 }
 
 
