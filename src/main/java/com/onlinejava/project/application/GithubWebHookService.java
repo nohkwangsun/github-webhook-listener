@@ -1,4 +1,4 @@
-package com.onlinejava.project.adapter.web;
+package com.onlinejava.project.application;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

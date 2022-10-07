@@ -1,5 +1,6 @@
 package com.onlinejava.project.adapter.web;
 
+import com.onlinejava.project.application.GithubWebHookService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
