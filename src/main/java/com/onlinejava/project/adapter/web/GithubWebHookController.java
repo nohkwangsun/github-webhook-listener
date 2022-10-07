@@ -43,6 +43,7 @@ public class GithubWebHookController {
 
         try {
             switch (webHook.getAction()) {
+                case "requested" -> log.info("The Github DockerAction was requested : " + webHook.getAction());
                 case "in_progress" -> log.info("The Github DockerAction was started : " + webHook.getAction());
                 case "completed" -> {
                     if (!"success".equals(webHook.getWorkflowRun().getConclusion())) {
