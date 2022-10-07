@@ -20,8 +20,6 @@ public class GithubWebHookController {
     private String pusherEmail;
     @Value("${repository.sender.login}")
     private String senderLogin;
-    @Value("${repository.docker.registry}")
-    private String dockerRegistry;
     @Value("${repository.workingDirectory}")
     private String processWorkingDirectory;
     @Value("${repository.cloneUrl}")
@@ -67,8 +65,7 @@ public class GithubWebHookController {
     private void dockerRestart() throws IOException, InterruptedException {
         ProcessBuilder processBuilder = new ProcessBuilder();
         processBuilder.directory(new File(processWorkingDirectory));
-        execute(processBuilder, "docker pull " + dockerRegistry);
-        execute(processBuilder, "bin/docker-run.sh");
+        execute(processBuilder, "bin/docker-restart.sh");
     }
 
 //    @PostMapping("/push")
