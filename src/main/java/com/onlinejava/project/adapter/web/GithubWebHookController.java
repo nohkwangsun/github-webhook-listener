@@ -71,7 +71,7 @@ public class GithubWebHookController {
         execute(processBuilder, "bin/docker-run.sh");
     }
 
-    @PostMapping("/push")
+//    @PostMapping("/push")
     public ResponseEntity<String> handlePushHook(@RequestBody GithubWebHook webHook) {
         log.info("Call the method, handlePushHook");
         boolean isPusherValid = webHook.getPusher().getEmail().equals(pusherEmail);
