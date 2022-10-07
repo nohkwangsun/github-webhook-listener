@@ -18,6 +18,10 @@ public class GithubWebHookController {
 
     @Value("${repository.pusher.email}")
     private String pusherEmail;
+    @Value("${repository.sender.login}")
+    private String senderLogin;
+    @Value("${repository.docker.registry}")
+    private String dockerRegistry;
     @Value("${repository.workingDirectory}")
     private String processWorkingDirectory;
     @Value("${repository.cloneUrl}")
@@ -28,7 +32,46 @@ public class GithubWebHookController {
         return "ok";
     }
 
-    @PostMapping()
+    @PostMapping("/docker")
+    public ResponseEntity<String> handleDockerActionHook(@RequestBody GithubDockerActionWebHook webHook) {
+        log.info("Call the method, handlePushHook");
+        boolean isPusherValid = webHook.getSender().getLogin().equals(senderLogin);
+        boolean isCorrectRepository = webHook.getRepository().getCloneUrl().equals(repositoryCloneUrl);
+        if (!isPusherValid || !isCorrectRepository) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid DockerAction WebHook : " + webHook);
+        }
+        log.info("The Github DockerAction WebHook is valid. [{}]", webHook);
+
+
+        try {
+            switch (webHook.getAction()) {
+                case "in_progress" -> log.info("The Github DockerAction was started : " + webHook.getAction());
+                case "completed" -> {
+                    if (!"success".equals(webHook.getWorkflowRun().getConclusion())) {
+                        log.error("The result of Github DockerAction is not success was started : " + webHook.getWorkflowRun().getConclusion());
+                    }
+                    dockerRestart();
+                }
+                default -> log.error("Invalid Action : " + webHook.getAction());
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("failure");
+        }
+
+        log.info("Finish the method, handleDockerActionHook");
+        return ResponseEntity.status(HttpStatus.OK).body("success");
+    }
+
+    private void dockerRestart() throws IOException, InterruptedException {
+        ProcessBuilder processBuilder = new ProcessBuilder();
+        processBuilder.directory(new File(processWorkingDirectory));
+        execute(processBuilder, "docker pull " + dockerRegistry);
+        execute(processBuilder, "bin/docker-run.sh");
+    }
+
+    @PostMapping("/push")
     public ResponseEntity<String> handlePushHook(@RequestBody GithubWebHook webHook) {
         log.info("Call the method, handlePushHook");
         boolean isPusherValid = webHook.getPusher().getEmail().equals(pusherEmail);
@@ -36,12 +79,11 @@ public class GithubWebHookController {
         if (!isPusherValid || !isCorrectRepository) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid Hook : " + webHook);
         }
-
         log.info("The Github WebHook is valid. [{}]", webHook);
 
 
         try {
-            process();
+            runScripts();
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("failure");
@@ -51,7 +93,7 @@ public class GithubWebHookController {
         return ResponseEntity.status(HttpStatus.OK).body("success");
     }
 
-    public void process() throws IOException, InterruptedException {
+    public void runScripts() throws IOException, InterruptedException {
         ProcessBuilder processBuilder = new ProcessBuilder();
         processBuilder.directory(new File(processWorkingDirectory));
         execute(processBuilder, "bin/stop.sh");

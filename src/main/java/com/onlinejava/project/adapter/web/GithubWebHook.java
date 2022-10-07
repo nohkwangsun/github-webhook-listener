@@ -13,6 +13,7 @@ public class GithubWebHook {
     @Getter
     @ToString
     public class Repository {
+
         private long id;
         private String name;
 
