@@ -40,18 +40,27 @@ public class GithubWebHookController {
         }
         log.info("The Github DockerAction WebHook is valid. [{}]", webHook);
 
+        String body = "message accept";
 
         try {
             switch (webHook.getAction()) {
-                case "requested" -> log.info("The Github DockerAction was requested : " + webHook.getAction());
-                case "in_progress" -> log.info("The Github DockerAction was started : " + webHook.getAction());
+                case "requested" -> {
+                    log.info("The Github DockerAction was requested : " + webHook.getAction());
+                }
+                case "in_progress" -> {
+                    log.info("The Github DockerAction was started : " + webHook.getAction());
+                }
                 case "completed" -> {
                     if (!"success".equals(webHook.getWorkflowRun().getConclusion())) {
                         log.error("The result of Github DockerAction is not success was started : " + webHook.getWorkflowRun().getConclusion());
                     }
                     service.dockerRestart();
+                    body = "start scripts";
                 }
-                default -> log.error("Invalid Action : " + webHook.getAction());
+                default -> {
+                    log.error("Invalid Action : " + webHook.getAction());
+                    body = "unknown action";
+                }
             }
 
         } catch (Exception e) {
@@ -60,7 +69,7 @@ public class GithubWebHookController {
         }
 
         log.info("Finish the method, handleDockerActionHook");
-        return ResponseEntity.status(HttpStatus.OK).body("success");
+        return ResponseEntity.status(HttpStatus.OK).body(body);
     }
 
     @PostMapping("/push")
